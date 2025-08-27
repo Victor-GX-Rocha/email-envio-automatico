@@ -1,10 +1,11 @@
 """ Repository for table email. """
 
 from datetime import datetime, date
-from src.infra.db.models.email import Email, EmailConverter, EmailRecord
-from src.infra.db.repo.session.session_manager import session_scope
-from .models import ResponseCode
-from .base import (
+from src.infra.db.repo.email import Email, EmailRecord
+# from src.infra.db.models.email import Email, EmailConverter, EmailRecord
+from src.infra.db.session_manager import session_scope
+from src.infra.db.repo.models import ResponseCode
+from src.infra.db.repo.base import (
     # BaseGetMethods,
     BaseUpdateMethods,
     BaseDeleteMethods,
@@ -12,9 +13,7 @@ from .base import (
 )
 
 class EmailGetMethods:
-    def __init__(self):
-        self.converter = EmailConverter()
-    
+    """ Get (SELECT) methods for table Email. """
     def by_column_value(self, operacao: int) -> list[EmailRecord]:
         """
         Pick all lines with specified `operacao` value.
@@ -26,7 +25,7 @@ class EmailGetMethods:
         """
         with session_scope() as session:
             operations = session.query(Email).filter(Email.cod_retorno == operacao).all()
-            return self.converter.convert(operations)
+            return [oper.to_dataclass() for oper in operations]
     
     def pending_operations(self) -> list[Email]:
         """ Get pending operations. """

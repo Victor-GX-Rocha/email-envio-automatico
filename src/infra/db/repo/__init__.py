@@ -5,7 +5,7 @@ Provides:
     EmailRepository: Repository for table email.
 """
 
-from .email import EmailRepository
+from .email.email import EmailRepository
 
 __version__ = "v.0.0.1"
 __all__ = [

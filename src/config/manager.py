@@ -112,31 +112,6 @@ class AppConfigManager(RealTimeEnvManager):
         db = self.load_database_config()
         return f"postgresql+psycopg2://{db.user}:{db.password}@{db.hostname}:{db.port}/{db.database}"
     
-    def load_credentials(self):
-        """ Carrega sa credenciais da API Brasil """
-        try:
-            env_data = self._read_env_file()
-            RequiredSystem(CREDENTIAL_REQUIRED_KEYS, IGNORED_KEYS).validate(env_data)
-            
-            return ApiBrasilCredentials(
-                email=env_data["API_BRASIL_EMAIL"],
-                senha=env_data["API_BRASIL_SENHA"],
-                bearer_token=env_data["API_BRASIL_BEARER_TOKEN"],
-                device=ApiBrasilDevices(
-                    cpf=env_data["API_BRASIL_DEVICE_TOKEN_CPF"],
-                    cnpj=env_data["API_BRASIL_DEVICE_TOKEN_CNPJ"],
-                    placa=env_data["API_BRASIL_DEVICE_TOKEN_PLACA"]
-                )
-                # device={ #É só usar um getattr passando um lower
-                #     "CPF": env_data["API_BRASIL_DEVICE_TOKEN_CPF"],
-                #     "CNPJ": env_data["API_BRASIL_DEVICE_TOKEN_CNPJ"],
-                #     "PLACA": env_data["API_BRASIL_DEVICE_TOKEN_PLACA"]
-                # }
-            )
-        except Exception as e:
-            log.user.error(f"Falha na tentativa de obter as credenciais de login do usuário API Brasil: {e}")
-            raise
-    
     def verify_off_command(self) -> None:
         """ If STILL_ON == False. Auto turn off the program """
         if not self.load_app_config().still_on:

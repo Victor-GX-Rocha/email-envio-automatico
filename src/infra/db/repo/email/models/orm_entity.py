@@ -6,18 +6,18 @@ from sqlalchemy import event, String, Integer, Text, Date, Time, ForeignKey, Seq
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, composite
 from sqlalchemy.schema import CreateSequence
 
-from .data_class import EmailShippingDetails, EmailContent, EmailLog
+from .data_class import EmailRecord, EmailShippingDetails, EmailContent, EmailLog
 
 class Base(DeclarativeBase):
     pass
 
+import re
 
 class Email(Base):
     __tablename__ = "email"
     
     id_seq = Sequence("email_id_sq1")
     
-    # id: Mapped[int] = mapped_column(Integer, primary_key=True, erver_default=id_seq.next_value())
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
@@ -39,10 +39,10 @@ class Email(Base):
     
     dt_criacao: Mapped[date] = mapped_column(Date, default=date.today)
     hora_criacao: Mapped[time] = mapped_column(Time, default=datetime.now().time)
-    dt_envio: Mapped[Optional[date]] = mapped_column(Date, nullable=False)
-    hora_envio: Mapped[Optional[time]] = mapped_column(Time, nullable=False)
+    dt_envio: Mapped[Optional[date]] = mapped_column(Date)
+    hora_envio: Mapped[Optional[time]] = mapped_column(Time)
     
-    shipping_details = composite(
+    shipping = composite(
         EmailShippingDetails,
         "email_emitente",
         "senha_email_emitente",
@@ -76,4 +76,22 @@ class Email(Base):
             target=cls.__table__,
             identifier="after_create",
             fn=CreateSequence(cls.id_seq)
+        )
+    
+    def to_dataclass(self) -> EmailRecord:
+        """ Convert the ORM table to a dataclass version. """
+        
+        shipping = self.shipping
+        content = self.content
+        
+        shipping.recipient_email = re.split(r'[;,]', self.email_destinatario.strip()) if self.email_destinatario else None
+        content.attachments = re.split(r'[,;]', self.anexos.strip()) if self.anexos else None
+        
+        return EmailRecord(
+            id=self.id,
+            cnpj=self.cnpj,
+            cod_retorno=self.cod_retorno,
+            shipping=shipping,
+            content=self.content,
+            log=self.log
         )

@@ -1,6 +1,6 @@
 """ Base common update functionalities. """
 
-from src.infra.db.repo.session import session_scope
+from src.infra.db.session_manager import session_scope
 from src.infra.db.repo.models import ResponseCode
 
 

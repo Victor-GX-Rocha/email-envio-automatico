@@ -4,7 +4,7 @@ from typing import Iterator
 from sqlalchemy.orm import Session
 from contextlib import contextmanager
 
-from src.infra.db import InternalSession
+from .database import InternalSession
 
 @contextmanager
 def session_scope() -> Iterator[Session]:

@@ -13,12 +13,12 @@ class EmailShippingDetails:
         sender_email (str): email_emitente column.
         sender_password (str): senha_email_emitente column.
         sender_smtp (str): smtp_emitente column.
-        recipient_email (str): email_destinatario column.
+        recipient_email (list[str]): email_destinatario column.
     """
     sender_email: str
     sender_password: str
     sender_smtp: str
-    recipient_email: str
+    recipient_email: list[str]
 
 @dataclass
 class EmailContent:
@@ -27,12 +27,12 @@ class EmailContent:
     Args:
         subject (str): assunto column.
         message (Optional[str]): mensagem column.
-        attachments (Optional[str]): anexos column.
+        attachments (Optional[list[str]]): anexos column.
         error_message (Optional[str]): mensagem_erro column.
     """
     subject: str
     message: Optional[str] = None
-    attachments: Optional[str] = None
+    attachments: Optional[list[str]] = None
     error_message: Optional[str] = None
 
 @dataclass
@@ -56,6 +56,6 @@ class EmailRecord:
     id: int
     cnpj: str
     cod_retorno: int
-    shipping_details: EmailShippingDetails
+    shipping: EmailShippingDetails
     content: EmailContent
     log: EmailLog

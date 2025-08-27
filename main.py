@@ -8,3 +8,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+# Melhorar a segurança do envio de email
+# Melhorar o sistema de conexão, aplicar KISS e IAGN nele, deixar mais direto

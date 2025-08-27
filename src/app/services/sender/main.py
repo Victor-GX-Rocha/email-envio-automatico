@@ -1,22 +1,54 @@
-
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-import os
 import re
-
+from src.core.log import log
 from src.infra.db.repo import EmailRepository
 from src.infra.db.repo.email import EmailRecord
 from src.infra.db.repo.models import ResponseCode
+from .senders import SmtplibSender, EmailSenderError
 
-from src.core.log import log
+class EmailRecordValidation:
+    def validate(self, line: EmailRecord) -> bool:
+        """ 
+        Validates if the line has all data necessary to send a valid email. 
+        Args:
+            line (EmailRecord): Record of a line from table email.
+        """
+        
+        errors: dict = {}
+        self.validate_empty_columns(line, errors)
+        self.validate_invalid_columns(line, errors)
+        
+        if errors:
+            raise EmailSenderError(errors)
+    
+    def validate_empty_columns(self, line: EmailRecord, errors: dict) -> None:
+        """ Validate that essential columns are filled in. """
+        empty_columns: list[str] = [
+            col for col in [
+                    line.shipping.recipient_email, 
+                    line.shipping.sender_email, 
+                    line.shipping.sender_password
+                ] if not col
+            ]
+        if not empty_columns:
+            return
+        errors.update({"Coluna(s) obrigatória(s) vazias": empty_columns})
+    
+    def validate_invalid_columns(self, line: EmailRecord, errors: dict) -> None:
+        """ Validate that essencial columns are in the correct format. """
+        invalid_emails: list[str] = []
+        
+        for email in line.shipping.recipient_email:
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                invalid_emails.append(email)
+        
+        if invalid_emails:
+            errors.update({"Emails em formato inválido": invalid_emails})
 
-
-class EmailSender:
+class EmailSenderApp:
     def __init__(self):
         self.repo = EmailRepository()
+        self.sender = SmtplibSender()
+        self.validator = EmailRecordValidation()
     
     def execute(self) -> None:
         pending_lines: list[EmailRecord] = self.repo.get.pending_operations()
@@ -28,70 +60,27 @@ class EmailSender:
             self.send_email(line)
     
     def send_email(self, line: EmailRecord) -> None:
-        """  """
+        """ 
+        Send a email based on table email lines. 
+        Args:
+            line (EmailRecord): Record of a line from table email.
+        """
         try:
-            self.enviar_email(
-                remetente=line.shipping_details.sender_email,
-                senha=line.shipping_details.sender_password,
-                destinatarios=line.shipping_details.recipient_email.strip(),
-                assunto=line.content.subject,
-                corpo=line.content.message,
-                arquivos=line.content.attachments
+            self.validator.validate(line)
+            
+            self.sender.execute(
+                sender=line.shipping.sender_email,
+                password=line.shipping.sender_password,
+                recipients=line.shipping.recipient_email,
+                subject=line.content.subject,
+                body=line.content.message,
+                files=line.content.attachments,
+                smtp=line.shipping.sender_smtp
             )
             self.repo.update.log_success(line.id)
-        except Exception as e:
+        except EmailSenderError as e:
             log.dev.exception(f"Erro ao enviar e-mail: {str(e)}")
+        except Exception as e:
+            log.dev.exception(f"Erro inesperado ao enviar e-mail: {str(e)}")
             self.repo.update.log_error(line.id, ResponseCode.PROGRAM_ERROR, f"Falha inesperada durante o envio de email {e}")
-    
-    def enviar_email(
-        self,
-        remetente: str, 
-        senha: str, 
-        destinatarios: str, 
-        assunto: str, 
-        corpo: str, 
-        arquivos: str =None
-    ) -> None:
-        """ Envia e-mail com anexos para múltiplos destinatários. """
-        
-        # Configurar mensagem
-        destinatarios = re.split(r'[;,]', destinatarios)
-        # to = re.split(r'[,;]', destinatarios)
-        print(f"destinatários {destinatarios}")
-        msg = MIMEMultipart()
-        msg['From'] = remetente
-        msg['To'] = ', '.join(destinatarios) # Lista de destinatários separados por vírgula
-        msg['Subject'] = assunto
-        
-        # Corpo do e-mail
-        msg.attach(MIMEText(corpo, 'plain'))
-        
-        # Anexar arquivos
-        if arquivos:
-            arquivos = re.split(r'[,;]', arquivos)
-            print(f"arquivos: {arquivos}")
-            for arquivo in arquivos:
-                try:
-                    with open(arquivo, "rb") as anexo:
-                        part = MIMEBase('application', 'octet-stream')
-                        part.set_payload(anexo.read())
-                    encoders.encode_base64(part)
-                    part.add_header(
-                        'Content-Disposition',
-                        f'attachment; filename="{os.path.basename(arquivo)}"'
-                    )
-                    msg.attach(part)
-                except FileNotFoundError:
-                    print(f"Erro: Arquivo {arquivo} não encontrado.")
-        
-        # Enviar e-mail
-        try:
-            server = smtplib.SMTP('smtp.gmail.com', 587)  # Alterar para seu servidor SMTP
-            server.starttls()
-            server.login(remetente, senha)
-            server.sendmail(remetente, destinatarios, msg.as_string())
-            server.quit()
-            print("E-mail enviado com sucesso!")
-        except Exception as e:
-            log.dev.exception(f"Erro ao enviar e-mail: {str(e)}")
-            raise
+

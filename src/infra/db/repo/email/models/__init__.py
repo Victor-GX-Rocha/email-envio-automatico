@@ -3,16 +3,14 @@ Functionalities for table email.
 
 Provides:
     Email: ORM class entity.
-    EmailRecord: 
-    EmailShippingDetails: 
-    EmailContent: 
-    EmailLog: 
-    EmailConverter: Class converter.
+    EmailRecord: A dataclass model to represents the entirely email table.
+    EmailShippingDetails: Represents the shipping info clumns from email table.
+    EmailContent: Represents the content columns from email table.
+    EmailLog: Represents the log columns from email table.
 """
 
 from .orm_entity import Email
 from .data_class import EmailRecord, EmailShippingDetails, EmailContent, EmailLog
-from .orm_converter import EmailConverter
 
 __version__ = "v.0.0.1"
 __all__ = [
@@ -20,5 +18,4 @@ __all__ = [
     
     "Email",
     "EmailRecord", "EmailShippingDetails", "EmailContent", "EmailLog",
-    "EmailConverter"
 ]

@@ -2,7 +2,10 @@
 Base shared CRUD commands for tables
 
 Provides:
-    
+    BaseGetMethods: 
+    BaseUpdateMethods: 
+    BaseDeleteMethods: 
+    BaseInsertMethods: 
 """
 
 from .base import (
@@ -12,7 +15,7 @@ from .base import (
     BaseInsertMethods
 )
 
-__version__ = "v.0.0.0"
+__version__ = "v.0.0.1"
 __all__ = [
     "__version__",
     

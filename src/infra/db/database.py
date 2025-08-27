@@ -1,6 +1,4 @@
-""" Base for database conections.  """
-
-# database.py
+""" Base for database conections. """
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -16,6 +14,6 @@ Base = declarative_base()
 InternalSession = sessionmaker(bind=engine)
 
 def init_database():
-    """ Start the database """
+    """ Start the database. """
     Base.metadata.create_all(engine)
     print("Starting database")
