@@ -3,7 +3,7 @@ import time
 
 from .core import log
 from .config import AppConfigManager
-# from .app import App
+from .app import App
 
 config = AppConfigManager()
 database_config = config.load_database_config()
@@ -11,7 +11,6 @@ database_config = config.load_database_config()
 class MainLoop:
     def turn_on(self):
         """ Turns on the loop and keeps it active as long as the STILL_ON variable in the .env file is active. """
-        
         try:
             
             log.user.info("Iniciando o bot...")
@@ -28,7 +27,7 @@ class MainLoop:
                 # current_time = time.time()
                 
                 # Regular operations
-                # App.email_sender.execute()
+                App.email_sender.execute()
                 
                 time.sleep(app_config.timer)
             
